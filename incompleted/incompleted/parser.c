@@ -27,6 +27,60 @@ void eat(TokenType tokenType) {
   } else missingToken(tokenType, lookAhead->lineNo, lookAhead->colNo);
 }
 
+/* ==================== KHAI BÁO TIỀN ĐỊNH ====================== */
+
+void compileProgram(void);
+void compileBlock(void);
+void compileBlockInSub(void);
+void compileConstDecls(void);
+void compileConstDecl(void);
+void compileTypeDecls(void);
+void compileTypeDecl(void);
+void compileVarDecls(void);
+void compileVarDecl(void);
+void compileSubDecls(void);
+void compileFuncDecl(void);
+void compileProcDecl(void);
+
+void compileUnsignedConstant(void);
+void compileConstant2(void);
+void compileConstant(void);
+void compileType(void);
+void compileBasicType(void);
+void compileParams(void);
+void compileParams2(void);
+void compileParam(void);
+
+void compileStatements(void);
+void compileStatements2(void);
+void compileStatement(void);
+
+// ✅ HÀM MỚI: REPEAT...UNTIL
+void compileRepeatSt(void);
+
+// ✅ HÀM MỚI: Hỗ trợ gán nhiều biến
+void compileIdentifierWithIndexes(void); 
+void compileAssignSt(void);
+void compileCallSt(void);
+void compileGroupSt(void);
+void compileIfSt(void);
+void compileElseSt(void);
+void compileWhileSt(void);
+void compileForSt(void);
+
+void compileArguments(void);
+void compileArguments2(void);
+void compileIndexes(void);
+void compileCondition(void);
+void compileCondition2(void);
+void compileExpression(void);
+void compileExpression2(void);
+void compileExpression3(void);
+void compileTerm(void);
+void compileTerm2(void);
+void compileFactor(void);
+
+
 /* ==================== PROGRAM ========================= */
 
 void compileProgram(void) {
@@ -241,7 +295,18 @@ void compileType(void) {
     case KW_ARRAY:
       eat(KW_ARRAY);
       eat(SB_LSEL);
-      eat(TK_NUMBER);
+      
+      // KHẮC PHỤC LỖI TEST 5: Chấp nhận TK_IDENT (như MAX) hoặc TK_NUMBER
+      if (lookAhead->tokenType == TK_NUMBER) {
+          eat(TK_NUMBER);
+      } else if (lookAhead->tokenType == TK_IDENT) {
+          eat(TK_IDENT); // Chấp nhận tên hằng số (MAX)
+      } else {
+          // Nếu không phải TK_NUMBER hoặc TK_IDENT, báo lỗi hằng số không hợp lệ
+          error(ERR_INVALIDCONSTANT, lookAhead->lineNo, lookAhead->colNo); 
+      }
+      // Kết thúc sửa lỗi
+      
       eat(SB_RSEL);
       eat(KW_OF);
       compileType();
@@ -308,9 +373,11 @@ void compileStatement(void) {
     case KW_IF: compileIfSt(); break;
     case KW_WHILE: compileWhileSt(); break;
     case KW_FOR: compileForSt(); break;
+    case KW_REPEAT: compileRepeatSt(); break; // ✅ Hỗ trợ REPEAT
     case SB_SEMICOLON:
     case KW_END:
     case KW_ELSE:
+    case KW_UNTIL: // Thêm UNTIL để kết thúc REPEAT...UNTIL (không phải là statement)
       break;
 
     default:
@@ -318,17 +385,51 @@ void compileStatement(void) {
   }
 }
 
+/* ================= REPEAT-UNTIL ======================== */
+
+void compileRepeatSt(void) {
+  assert("Parsing a repeat statement ....");
+  eat(KW_REPEAT);
+  compileStatements();
+  eat(KW_UNTIL);
+  compileCondition();
+  assert("Repeat statement parsed ....");
+}
+
 /* ================= ASSIGN ============================= */
+
+// Hàm phụ trợ cho việc gán nhiều biến
+void compileIdentifierWithIndexes(void) {
+    eat(TK_IDENT);
+    compileIndexes();
+}
 
 void compileAssignSt(void) {
   assert("Parsing an assign statement ....");
-  eat(TK_IDENT);
-  compileIndexes();
+
+  // 1. Phân tích CÁC BIẾN (vế trái: Identifier Indexes { , Identifier Indexes }*)
+  compileIdentifierWithIndexes();
+  
+  // Xử lý trường hợp gán nhiều biến
+  while (lookAhead->tokenType == SB_COMMA) {
+    eat(SB_COMMA);
+    compileIdentifierWithIndexes();
+  }
+
   eat(SB_ASSIGN);
   
-  assert("Parsing an expression"); // ASSERT VÌ compileExpression KHÔNG TỰ BAO BỌC
+  // 2. Phân tích CÁC BIỂU THỨC (vế phải: Expression { , Expression }*)
+  assert("Parsing an expression"); 
   compileExpression();
   assert("Expression parsed");
+
+  // Xử lý trường hợp gán nhiều biểu thức
+  while (lookAhead->tokenType == SB_COMMA) {
+    eat(SB_COMMA);
+    assert("Parsing an expression"); 
+    compileExpression();
+    assert("Expression parsed");
+  }
   
   assert("Assign statement parsed ....");
 }
@@ -376,7 +477,7 @@ void compileElseSt(void) {
 /* ================= WHILE ============================= */
 
 void compileWhileSt(void) {
-  assert("Parsing a while statement ...."); // THÊM ASSERT BỊ THIẾU
+  assert("Parsing a while statement ....");
   eat(KW_WHILE);
   compileCondition();
   eat(KW_DO);
@@ -392,13 +493,13 @@ void compileForSt(void) {
   eat(TK_IDENT);
   eat(SB_ASSIGN);
   
-  assert("Parsing an expression"); // ASSERT CHO BIỂU THỨC BẮT ĐẦU
+  assert("Parsing an expression"); 
   compileExpression();
   assert("Expression parsed");
   
   eat(KW_TO);
   
-  assert("Parsing an expression"); // ASSERT CHO BIỂU THỨC KẾT THÚC
+  assert("Parsing an expression");
   compileExpression();
   assert("Expression parsed");
   
@@ -413,7 +514,7 @@ void compileArguments(void) {
   if (lookAhead->tokenType == SB_LPAR) {
     eat(SB_LPAR);
     
-    assert("Parsing an expression"); // ASSERT CHO ARGUMENT 1
+    assert("Parsing an expression"); 
     compileExpression();
     assert("Expression parsed");
     
@@ -426,7 +527,7 @@ void compileArguments2(void) {
   if (lookAhead->tokenType == SB_COMMA) {
     eat(SB_COMMA);
     
-    assert("Parsing an expression"); // ASSERT CHO ARGUMENT 2+
+    assert("Parsing an expression"); 
     compileExpression();
     assert("Expression parsed");
     
@@ -440,7 +541,7 @@ void compileIndexes(void) {
   if (lookAhead->tokenType == SB_LSEL) {
     eat(SB_LSEL);
     
-    assert("Parsing an expression"); // ASSERT CHO INDEX EXPRESSION
+    assert("Parsing an expression"); 
     compileExpression();
     assert("Expression parsed");
     
@@ -452,7 +553,6 @@ void compileIndexes(void) {
 /* ================= CONDITIONS ========================= */
 
 void compileCondition(void) {
-  // ASSERT CHO BIỂU THỨC 1 CỦA CONDITION
   assert("Parsing an expression");
   compileExpression();
   assert("Expression parsed");
@@ -472,7 +572,6 @@ void compileCondition2(void) {
       error(ERR_INVALIDCOMPARATOR, lookAhead->lineNo, lookAhead->colNo);
   }
   
-  // ASSERT CHO BIỂU THỨC 2 CỦA CONDITION
   assert("Parsing an expression");
   compileExpression();
   assert("Expression parsed");
@@ -481,12 +580,10 @@ void compileCondition2(void) {
 /* ================= EXPRESSION ========================= */
 
 void compileExpression(void) {
-  // KHÔNG CÓ ASSERTS Ở ĐÂY
   if (lookAhead->tokenType == SB_PLUS) eat(SB_PLUS);
   else if (lookAhead->tokenType == SB_MINUS) eat(SB_MINUS);
 
   compileExpression2();
-  // KHÔNG CÓ ASSERTS Ở ĐÂY
 }
 
 void compileExpression2(void) {
@@ -545,9 +642,9 @@ void compileFactor(void) {
 
     case SB_LPAR:
       eat(SB_LPAR);
-      assert("Parsing an expression"); // THÊM ASSERT
+      assert("Parsing an expression"); 
       compileExpression();
-      assert("Expression parsed");     // THÊM ASSERT
+      assert("Expression parsed");     
       eat(SB_RPAR);
       break;
 

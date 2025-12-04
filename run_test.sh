@@ -9,7 +9,7 @@ echo "====================="
 echo " Running KPL Tests "
 echo "====================="
 
-for i in 1 2 3 4
+for i in 1 2 3 4 
 do
     INPUT="$TEST_DIR/example$i.kpl"
     EXPECT="$TEST_DIR/result$i.txt"

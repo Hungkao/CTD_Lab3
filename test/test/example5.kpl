@@ -1,0 +1,62 @@
+PROGRAM FullTest;
+    CONST MAX = 10;
+    TYPE ArrType = ARRAY [MAX] OF INTEGER;
+    VAR i, j, k: INTEGER;
+        arr: ArrType;
+        c: CHAR;
+
+    PROCEDURE PrintVals(VAR x: INTEGER; y: CHAR);
+    BEGIN
+        (* Giả lập logic xử lý cho test *)
+        x := x + 1;
+    END;
+
+BEGIN
+    (* ================================== *)
+    (* 1. TEST CÚ PHÁP GÁN NHIỀU BIẾN *)
+    (* ================================== *)
+    i, j, k := 1, 2, 3;
+
+    (* Gán phức tạp với Indexing *)
+    arr[1], j, arr[2] := i + 5, k * 2, i + j;
+    
+    (* Gán nhiều biểu thức với hàm *)
+    (* Giả sử PrintVals là Procedure, không thể dùng ở vế phải,
+       nên ta dùng biểu thức đơn giản *)
+    i, j := arr[1] + arr[2], arr[2] - 1;
+
+    (* ================================== *)
+    (* 2. TEST CÚ PHÁP REPEAT...UNTIL *)
+    (* ================================== *)
+    i := 0;
+    j := 0;
+    REPEAT
+        i := i + 1;
+        (* Gán nhiều biến bên trong REPEAT *)
+        j, k := j + i, k + 1;
+        
+        IF j > 10 THEN
+            BEGIN
+                CALL PrintVals(j, 'A');
+                j := j - 10
+            END
+    UNTIL i = 5; (* Vòng lặp chạy 5 lần *)
+
+    (* ================================== *)
+    (* 3. TEST CÁC CẤU TRÚC KHÁC (Đảm bảo không bị vỡ) *)
+    (* ================================== *)
+
+    WHILE k > 0 DO
+        BEGIN
+            k := k - 1
+        END;
+
+    FOR i := 1 TO MAX DO
+        arr[i] := i * 10;
+        
+    IF arr[5] = 50 THEN
+        CALL PrintVals(arr[5], 'B')
+    ELSE
+        arr[5] := 0;
+        
+END.

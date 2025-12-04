@@ -25,7 +25,9 @@ typedef enum {
   CHAR_SEMICOLON,
   CHAR_SINGLEQUOTE,
   CHAR_LPAR,
-  CHAR_RPAR,
+  CHAR_RPAR,// Thêm định nghĩa cho ngoặc vuông (Bracket)
+  CHAR_LBRACKET,  // <-- Bổ sung
+  CHAR_RBRACKET,  // <-- Bổ sung
   CHAR_UNKNOWN
 } CharCode;
 
